@@ -6,6 +6,8 @@ const response = require('../utils/responseTemp');
 const index = require('./index');
 const { tokenTypes } = require('../config/tokens');
 const Token = require('../models/user.model');
+const jwt = require("jsonwebtoken");
+const config = require("../config/config");
 
 /**
  * Query for users
@@ -54,6 +56,23 @@ const updateRoleForgotPassById = async (id, token) => {
   await userRole.save();
   return userRole;
 };
+
+/**
+ * Update User, verify email token by id
+ * @param {Number} id
+ * @param token
+ * @returns {Promise<Model>}
+ */
+const updateRoleVerifyEmailById = async (id, token) => {
+  const userRole = await getRoleById(id);
+  if (!userRole) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  userRole.verifyEmailToken = token;
+  await userRole.save();
+  return userRole;
+};
+
 /**
  * Update User, refreshToken by userId
  * @param {Number} id
@@ -87,7 +106,6 @@ const getUserByEmail = async (email) => {
  * @param {Object} updateBody
  * @returns {Promise<UserModel>}
  */
-
 const updateUserById = async (userId, updateBody) => {
   const user = await getUserById(userId);
   const currentContact = user.contact;
@@ -106,7 +124,6 @@ const updateUserById = async (userId, updateBody) => {
  * @param {string} contact
  * @returns {Promise<UserModel>}
  */
-
 const updateContactUserByEmail = async (email, contact) => {
   const user = await getUserByEmail(email);
   const currentContact = user.contact;
@@ -141,6 +158,7 @@ const deleteUserById = async (userId) => {
 const getUserByContact = async (contact) => {
   return UserModel.findOne({ where: { contact } });
 };
+
 /**
  * Update Role SMS Token
  * @param {Number} id
@@ -156,6 +174,7 @@ const updateRoleSMSToken = async (id, token) => {
   await userRole.save();
   return userRole;
 };
+
 /**
  * Reset password
  * @param {string} resetPasswordToken
@@ -203,13 +222,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
  */
 const verifyEmail = async (verifyEmailToken) => {
   try {
-    const verifyEmailTokenDoc = await index.tokenService.verifyTokenEmail(verifyEmailToken, tokenTypes.VERIFY_EMAIL);
-    const user = await getUserById(verifyEmailTokenDoc.user);
-    if (!user) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-    }
-    await Token.deleteMany({ user: user.id, type: tokenTypes.VERIFY_EMAIL });
-    await updateUserById(user.id, { isEmailVerified: true });
+    return jwt.verify(verifyEmailToken, config.jwt.secret);
   } catch (error) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Email verification failed');
   }
@@ -248,4 +261,5 @@ module.exports = {
   getUserByContact,
   changePassword,
   updateContactUserByEmail,
+  updateRoleVerifyEmailById,
 };

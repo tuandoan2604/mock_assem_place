@@ -77,13 +77,19 @@ const changePassword = catchAsync(async (req, res) => {
 });
 
 const sendVerificationEmail = catchAsync(async (req, res) => {
-  // const verifyEmailToken = await tokenService.generateVerifyEmailToken(req.user);
-  await emailService.sendVerificationEmail('tuandoan2604@gmail.com', 'Alo');
+  const verifyEmailCode = Math.floor(Math.random() * 10000);
+  await tokenService.generateVerifyEmailToken(req.body.user.email, verifyEmailCode);
+  await emailService.sendVerificationEmail(req.body.user.email, verifyEmailCode);
   res.status(httpStatus.OK).send(response(httpStatus.NO_CONTENT, 'Send Verify Mail Success', null));
 });
 
 const verifyEmail = catchAsync(async (req, res) => {
-  await userService.verifyEmail(req.query.token);
+  const user = await userService.getUserByEmail(req.body.email);
+  const tokenDoc = await userService.getRoleById(user.id);
+  const tokenPayload = await userService.verifyEmail(tokenDoc.verifyEmailToken);
+  if (tokenPayload.code !== req.body.code)
+    res.status(httpStatus.BAD_REQUEST).send(response(httpStatus.BAD_REQUEST, 'Error Code'));
+  await userService.updateUserById(user.id, { isEmailVerified: true });
   res.status(httpStatus.OK).send(response(httpStatus.NO_CONTENT, 'Verify Success', null));
 });
 

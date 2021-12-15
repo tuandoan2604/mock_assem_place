@@ -195,7 +195,6 @@ const generateResetPasswordToken = async (email, resetPasswordNumber) => {
 /**
  * Generate reset password token after verify
  * @param {number} userId
- * @param resetPasswordNumber
  * @returns {Promise<string>}
  */
 const generateResetPasswordTokenVerify = async (userId) => {
@@ -205,13 +204,20 @@ const generateResetPasswordTokenVerify = async (userId) => {
 
 /**
  * Generate verify email token
- * @param {User} user
- * @returns {Promise<string>}
+ * @param email
+ * @param verifyEmailCode
  */
-const generateVerifyEmailToken = async (user) => {
+const generateVerifyEmailToken = async (email, verifyEmailCode) => {
+  const user = await userService.getUserByEmail(email);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'No users found with this email');
+  } else if (user.isEmailVerified === true) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Email is verified');
+  }
   const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
-  const verifyEmailToken = generateToken(user.id, expires, tokenTypes.VERIFY_EMAIL);
+  const verifyEmailToken = generateTokenResetPass(email, verifyEmailCode, expires, tokenTypes.VERIFY_EMAIL);
   // await saveToken(verifyEmailToken, user.id, expires, tokenTypes.VERIFY_EMAIL);
+  await userService.updateRoleVerifyEmailById(user.id, verifyEmailToken);
   return verifyEmailToken;
 };
 

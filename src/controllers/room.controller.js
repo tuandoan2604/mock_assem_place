@@ -11,7 +11,7 @@ const getRoomById = catchAsync(async (req, res) => {
 
 const getRoomByUserId = catchAsync(async (req, res) => {
   const userId = req.user.profileId;
-  var rooms = await roomService.getRoomByUserId(userId);
+  let rooms = await roomService.getRoomByUserId(userId);
   if (Object.keys(req.query).length !== 0) {
     rooms = await roomService.getRoomByUserIdAndStatus(userId, req.query.active);
   }

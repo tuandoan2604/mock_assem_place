@@ -80,8 +80,9 @@ const updateContactByEmail = {
 };
 
 const verifyEmail = {
-  query: Joi.object().keys({
-    token: Joi.string().required(),
+  body: Joi.object().keys({
+    email: Joi.string().email().required(),
+    code: Joi.number().required(),
   }),
 };
 
