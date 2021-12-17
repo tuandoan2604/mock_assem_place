@@ -48,7 +48,3 @@ process.on('SIGTERM', () => {
     server.close();
   }
 });
-
-setInterval(function () {
-  logger.info('Keep Alive Heroku');
-}, 200000); // every 5 minutes (300000)
