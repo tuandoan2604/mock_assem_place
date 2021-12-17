@@ -142,14 +142,22 @@ const updateContactUserByEmail = async (email, contact) => {
  * @returns {Promise<UserModel>}
  */
 const deleteUserById = async (userId) => {
-  const user = await getUserById(userId);
-  if (!user) {
+  const [userRole, deivce, user] = await Promise.all([
+    getRoleById(userId),
+    index.deviceService.deleteDeviceByUserId(userId),
+    getUserById(userId),
+  ]);
+  if (userRole.idType === 'Homeowner' || 'Agent') await index.roomService.deleteRoomByUserId(userId);
+  else if (userRole.idType === 'Tenant') await index.roomPropertyService.deletePropertyByUserId(userId);
+  // const user = await getUserById(userId);
+  // const userRole = await getRoleById(userId);
+  if (!user && !userRole) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
+  await userRole.destroy();
   await user.destroy();
   return user;
 };
-
 /**
  * Get user by contact
  * @param {string} contact
