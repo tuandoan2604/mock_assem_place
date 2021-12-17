@@ -50,5 +50,5 @@ process.on('SIGTERM', () => {
 });
 
 setInterval(function () {
-  http.get('https://assem-place-mock.herokuapp.com');
-}, 300000); // every 5 minutes (300000)
+  logger.info('Keep Alive Heroku');
+}, 200000); // every 5 minutes (300000)
