@@ -1,3 +1,4 @@
+const http = require('https');
 const app = require('./app');
 const config = require('./config/config');
 const logger = require('./config/logger');
@@ -47,3 +48,7 @@ process.on('SIGTERM', () => {
     server.close();
   }
 });
+
+setInterval(function () {
+  http.get('https://assem-place-mock.herokuapp.com');
+}, 300000); // every 5 minutes (300000)
