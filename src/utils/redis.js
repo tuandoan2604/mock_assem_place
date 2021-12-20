@@ -2,7 +2,7 @@ const redis = require('redis');
 const config = require('../config/config');
 const logger = require('../config/logger');
 
-const client = redis.createClient('redis://redistogo:327b42f444a57620625a31f9eb4df4b7@sole.redistogo.com:10261/', {
+const client = redis.createClient(process.env.REDIS_URL, {
   tls: { rejectUnauthorized: false },
 });
 
