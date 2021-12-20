@@ -1,13 +1,11 @@
 const httpStatus = require('http-status');
+const jwt = require('jsonwebtoken');
 const UserModel = require('../models/profile.model');
-const UserRole = require('../models/user.model');
 const ApiError = require('../utils/ApiError');
 const response = require('../utils/responseTemp');
 const index = require('./index');
-const { tokenTypes } = require('../config/tokens');
 const Token = require('../models/user.model');
-const jwt = require("jsonwebtoken");
-const config = require("../config/config");
+const config = require('../config/config');
 
 /**
  * Query for users
@@ -32,13 +30,17 @@ const getUserById = async (id) => {
   return UserModel.findByPk(id);
 };
 
+const getUserRoleById = async (id) => {
+  return Token.findByPk(id);
+};
+
 /**
  * Get userType by userId
  * @param {Number} id
  * @returns {Promise<UserModel>}
  */
 const getRoleById = async (id) => {
-  return UserRole.findOne({ where: { profileId: id } });
+  return Token.findOne({ where: { profileId: id } });
 };
 
 /**
@@ -114,6 +116,13 @@ const updateUserById = async (userId, updateBody) => {
   }
   if (currentContact !== updateBody.contact) user.isContactVerified = false;
   Object.assign(user, updateBody);
+  await user.save();
+  return user;
+};
+
+const updatePreferencesHomeowner = async (userId, body) => {
+  const user = await getUserById(userId);
+  user.preferences = body;
   await user.save();
   return user;
 };
@@ -269,5 +278,7 @@ module.exports = {
   getUserByContact,
   changePassword,
   updateContactUserByEmail,
+  updatePreferencesHomeowner,
+  getUserRoleById,
   updateRoleVerifyEmailById,
 };

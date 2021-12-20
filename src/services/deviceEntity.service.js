@@ -58,7 +58,7 @@ const updateDeviceByDeviceId = async (deviceId, token) => {
  * @returns {Promise<UserModel>}
  */
 const deleteDeviceByUserId = async (userId) => {
-  const device = await DeviceEntityModel.destroy({ userId });
+  const device = await DeviceEntityModel.destroy({ where: { userId } });
   return device;
 };
 

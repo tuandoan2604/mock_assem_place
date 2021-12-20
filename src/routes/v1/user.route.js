@@ -7,16 +7,24 @@ const { checkUserAction } = require('../../middlewares/validateAction');
 
 const router = express.Router();
 
+router.route('/paginate').post(auth('homeowner' || 'agent'), userController.queryTenantByProperties);
+
 router
   .route('/')
   .post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)
   .get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers);
 
 router
+  .get('/matched', auth('homeowner' || 'agent'), userController.getListMatching)
+  .post('/matched', auth('homeowner' || 'agent'), userController.matching);
+
+router
   .route('/:userId')
   .get(auth('homeowner'), checkUserAction, validate(userValidation.getUser), userController.getUser)
   .patch(auth('homeowner'), checkUserAction, validate(userValidation.updateUser), userController.updateUser)
   .delete(auth('homeowner'), checkUserAction, validate(userValidation.deleteUser), userController.deleteUser);
+
+router.get('/tenant-detail/:id', auth('homeowner' || 'agent'), userController.getMatchTenantInfor);
 
 router.post('/forgot-password', validate(userValidation.forgotPassword), userController.forgotPassword);
 router.post('/forgot-password-verify-code', userController.forgotPasswordVerifyCode);

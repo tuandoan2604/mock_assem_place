@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const db = require('./index.js');
 const User = require('./profile.model');
+const SuitableRoomEntity = require('./suitableRoom.model');
 
 const RoomDesc = db.define('Room', {
   id: {
@@ -73,7 +74,7 @@ RoomDesc.queryRoomsByPropertise = async function (
   p_gender
 ) {
   const listId = await db.query(
-    'SELECT * FROM public."filterRoomsByAttributes"($1, $2, $3, $4::numeric, $5,$6, $7, ($8::text[]), $9::text, $10, $11::text[], $12::text[], $13::text[], $14::text[], $15, $16::text[], $17::text[], $18::text)',
+    'SELECT * FROM public."filterRoomsByTenantAttributes"($1, $2, $3, $4::numeric, $5,$6, $7, ($8::text[]), $9::text, $10, $11::text[], $12::text[], $13::text[], $14::text[], $15, $16::text[], $17::text[], $18::text)',
     {
       bind: [
         p_latitude,
@@ -132,5 +133,6 @@ RoomDesc.paginate = async function (filter, options) {
 
 // User.hasMany(RoomDesc);
 RoomDesc.belongsTo(User, { foreignKey: 'userId', targetKey: 'id' });
+RoomDesc.hasMany(SuitableRoomEntity, { foreignKey: 'roomId', targetKey: 'id' });
 db.sync();
 module.exports = RoomDesc;

@@ -38,6 +38,10 @@ const envVarsSchema = Joi.object()
     LOCATION_MAX: Joi.number().description('Location rate'),
     REANTAL_PRICE_MAX: Joi.number().description('Price rate'),
     TOTAL_PERCENT: Joi.number().description('Total percent'),
+    NUMBER_ITEM_PER_PAGE: Joi.number().description('number items per page'),
+    REDIS_HOST: Joi.string(),
+    REDIS_PORT: Joi.string(),
+    REDIS_PASS: Joi.string(),
   })
   .unknown();
 
@@ -97,5 +101,13 @@ module.exports = {
     distance_max: envVars.LOCATION_MAX,
     price_max: envVars.REANTAL_PRICE_MAX,
     total_percent: envVars.TOTAL_PERCENT,
+  },
+  paginate: {
+    number_item_per_page: envVars.NUMBER_ITEM_PER_PAGE,
+  },
+  redis: {
+    redis_host: envVars.REDIS_HOST,
+    redis_post: envVars.REDIS_PORT,
+    redis_pass: envVars.REDIS_PASS,
   },
 };

@@ -85,7 +85,7 @@ const updateRoomByRoomId = async (roomId, body) => {
  * @returns {Promise<RoomDesc>}
  */
 const deleteRoomByUserId = async (userId) => {
-  const room = await RoomDesc.destroy({ userId });
+  const room = await RoomDesc.destroy({ where: { userId } });
   return room;
 };
 
@@ -119,8 +119,9 @@ const getRoomsByMatchAttributes = async (userId) => {
  * Query rooms by attributes
  * @returns {Promise<[undefined, number]>}
  * @param properties
+ * @param user
  */
-const queryRoomsByAttributes = async (properties) => {
+const queryRoomsByAttributes = async (properties, user) => {
   const listId = await RoomDesc.queryRoomsByPropertise(
     properties.Location.Latitude,
     properties.Location.Longitude,
@@ -133,18 +134,62 @@ const queryRoomsByAttributes = async (properties) => {
     properties.RoomProperty.RoomType,
     properties.RoomProperty.AllowCook,
     properties.LeasePeriod.value,
-    properties.RoomProperty.BedroomNumber,
-    properties.RoomProperty.BathroomNumber,
+    properties.RoomProperty.BedroomNumber || [''],
+    properties.RoomProperty.BathroomNumber || [''],
     properties.RoomProperty.KeyWords,
     config.matching_room.total_percent,
-    null,
-    null,
-    null
+    user.lifestyle,
+    user.preferences,
+    user.gender
   );
   if (!listId) {
     throw new ApiError(httpStatus.NOT_FOUND, 'listRoom not found');
   }
   return listId;
+};
+
+/**
+ * Query tenants by attributes
+ * @returns {Promise<[undefined, number]>}
+ * @param properties
+ * @param user
+ */
+const queryTenantByAttributes = async (properties, user, gender, preferences) => {
+  const listId = await RoomProperty.queryTenantByOnwerRoomPropertise(
+    properties.Location.Latitude,
+    properties.Location.Longitude,
+    config.matching_room.distance_rate,
+    config.matching_room.distance_max,
+    properties.RentalPrice.type,
+    properties.RentalPrice.Max,
+    properties.RentalPrice.Min,
+    properties.RentalPrice.Price,
+    config.matching_room.price_rate,
+    properties.PlaceType,
+    properties.RoomDetails.RoomType,
+    properties.RoomDetails.AllowCook,
+    properties.LeasePeriod.value,
+    properties.RoomDetails.BedroomNumber || '',
+    properties.RoomDetails.BathroomNumber || '',
+    properties.RoomDetails.KeyWords,
+    config.matching_room.total_percent,
+    user.lifestyle,
+    preferences,
+    gender || 'male'
+  );
+  if (!listId) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'listRoom not found');
+  }
+  return listId;
+};
+
+const updatePreferencesAgent = async (roomId, body) => {
+  const room = await getRoomById(roomId);
+  const updateRoom = { ...room.toJSON() };
+  updateRoom.RoomDetails.homeownerPreferences = body;
+  Object.assign(room, updateRoom);
+  await room.save();
+  return room;
 };
 
 module.exports = {
@@ -159,4 +204,6 @@ module.exports = {
   getRoomPropertiesByUserId,
   updateRoomPropertiesByUserId,
   queryRoomsByAttributes,
+  queryTenantByAttributes,
+  updatePreferencesAgent,
 };

@@ -15,6 +15,10 @@ const Profile = db.define('Profile', {
   name: {
     type: DataTypes.TEXT,
     allowNull: false,
+    unique: {
+      args: true,
+      msg: 'Username already in use!',
+    },
   },
   contact: {
     type: DataTypes.TEXT,
@@ -117,6 +121,5 @@ Profile.isContactTaken = async function (contact, excludeUserId) {
   const user = await Profile.findOne({ where: { contact, id: excludeUserId } });
   return !!user;
 };
-
 db.sync();
 module.exports = Profile;

@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const db = require('./index.js');
+const SuitableRoomEntity = require('./suitableRoom.model');
 const Profile = require('./profile.model');
 
 const User = db.define('User', {
@@ -49,5 +50,6 @@ const User = db.define('User', {
 });
 
 User.belongsTo(Profile, { foreignKey: 'profileId', targetKey: 'id' });
+User.hasMany(SuitableRoomEntity, { foreignKey: 'userId', targetKey: 'id' });
 db.sync();
 module.exports = User;

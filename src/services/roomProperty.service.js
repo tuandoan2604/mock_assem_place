@@ -56,7 +56,7 @@ const updatePropertyByRoomId = async (id, body) => {
  * @returns {Promise<RoomProperty>}
  */
 const deletePropertyByUserId = async (userId) => {
-  const property = await RoomProperty.destroy({ userId });
+  const property = await RoomProperty.destroy({ where: { userId } });
   return property;
 };
 

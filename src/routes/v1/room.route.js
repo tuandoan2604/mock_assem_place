@@ -23,6 +23,12 @@ router
   .patch(auth('tenant'), validate(roomValidation.updateRoomProperties), roomController.updateRoomProperties);
 
 router
+  .get('/matched', auth('tenant'), roomController.getListFavoriteOrPassRoom)
+  .post('/matched', auth('tenant'), roomController.likeRoom);
+
+router.get('/room-detail/:id', auth('tenant'), roomController.getMatchRoomInfor);
+
+router
   .route('/:roomId')
   .get(auth('homeowner'), checkRoomAction, roomController.getRoomById)
   .patch(auth('homeowner'), checkRoomAction, validate(roomValidation.updateRoom), roomController.updateRoom)

@@ -8,3 +8,5 @@ module.exports.deviceService = require('./deviceEntity.service');
 module.exports.roomService = require('./room.service');
 module.exports.fileService = require('./file.service');
 module.exports.roomPropertyService = require('./roomProperty.service');
+module.exports.suitableService = require('./suitable.service');
+module.exports.matchingService = require('./matching.service');

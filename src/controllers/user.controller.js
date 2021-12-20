@@ -2,8 +2,10 @@ const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { userService, tokenService, emailService } = require('../services');
+const { userService, tokenService, emailService, roomService, matchingService } = require('../services');
 const response = require('../utils/responseTemp');
+const config = require('../config/config');
+const { result } = require('lodash');
 
 const createUser = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
@@ -106,6 +108,86 @@ const verifySMSCode = catchAsync(async (req, res) => {
   }
 });
 
+const queryTenantByProperties = catchAsync(async (req, res) => {
+  const roomDetailBeforeFormat = await roomService.getRoomById(req.body.roomId);
+  let roomDetail = roomDetailBeforeFormat.toJSON();
+  const userBeforeFormat = await userService.getUserById(req.user.profileId);
+  let user = userBeforeFormat.toJSON();
+  const role = await userService.getRoleById(req.user.profileId);
+  if (role.idType === 'Homeowner') {
+    const userAfterUpdate = await userService.updatePreferencesHomeowner(req.user.profileId, req.body.preferences);
+    user = { ...userAfterUpdate.toJSON() };
+  } else {
+    const roomAfterUpdate = await roomService.updatePreferencesAgent(req.body.roomId, req.body.preferences);
+    roomDetail = { ...roomAfterUpdate.toJSON() };
+  }
+  let gender;
+  if (req.body.preferences.some((element) => element === 'Female only')) gender = 'female';
+  else gender = 'any';
+  const dataQuery = await roomService.queryTenantByAttributes(roomDetail, user, gender, req.body.preferences);
+  const listId = dataQuery[0];
+
+  const numberPage = Math.ceil(listId.length / config.paginate.number_item_per_page);
+  const paginate = (arr, page_number) => {
+    return arr.slice(
+      (page_number - 1) * config.paginate.number_item_per_page,
+      page_number * config.paginate.number_item_per_page
+    );
+  };
+  const listItem = paginate(listId, req.query.page);
+  res.status(httpStatus.OK).json({ status: httpStatus.OK, message: 'OK', numberPage, listItem });
+});
+const matching = catchAsync(async (req, res) => {
+  const infor = await userService.getRoleById(req.body.userId);
+  const tenantId = infor.toJSON().id;
+  const result = await matchingService.likeOrPassTenant(req.body.roomId, tenantId, req.user.id, req.query.liked);
+  const tenantProfile = await userService.getUserById(req.body.userId);
+  const { createdAt, updatedAt, ...resultData } = {
+    ...result.toJSON(),
+    user: {
+      name: tenantProfile.name,
+      occupation: tenantProfile.occupation,
+      image: tenantProfile.image,
+    },
+  };
+  res.status(httpStatus.OK).send(response(httpStatus.OK, 'OK', resultData));
+});
+
+const getListMatching = catchAsync(async (req, res) => {
+  const listTenantMatchedWithStatus = await matchingService.getLikeOrPassPeople(req.user.id, req.query.liked);
+  let lisrTenantMatchedDetail = await Promise.all(
+    listTenantMatchedWithStatus.map(async (item) => {
+      const tenantRole = await userService.getUserRoleById(item.toJSON().tenantId);
+      const tenantProfile = await userService.getUserById(tenantRole.toJSON().profileId);
+      return {
+        id: item.toJSON().id,
+        ownerId: item.toJSON().ownerId,
+        tenantId: item.toJSON().tenantId,
+        user: {
+          name: tenantProfile.name,
+          occupation: tenantProfile.occupation,
+          image: tenantProfile.image,
+        },
+        like: item.toJSON().like,
+        availableChat: item.toJSON().availableChat,
+      };
+    })
+  );
+  if (req.query.search !== undefined && req.query.search !== '') {
+    const listTenantSearchResult = lisrTenantMatchedDetail.filter((item) => {
+      return item.user.name.toLowerCase().includes(req.query.search.toLowerCase());
+    });
+    lisrTenantMatchedDetail = [...listTenantSearchResult];
+  }
+  res.status(httpStatus.OK).send(response(httpStatus.OK, 'OK', lisrTenantMatchedDetail));
+});
+
+const getMatchTenantInfor = catchAsync(async (req, res) => {
+  const user = await userService.getUserById(req.params.id);
+  const { password, createdAt, updatedAt, ...result } = user.toJSON();
+  res.status(httpStatus.OK).send(response(httpStatus.OK, 'OK', result));
+});
+
 module.exports = {
   createUser,
   getUsers,
@@ -122,4 +204,8 @@ module.exports = {
   changePassword,
   forgotPasswordVerifyCode,
   updateContactByEmail,
+  queryTenantByProperties,
+  matching,
+  getListMatching,
+  getMatchTenantInfor,
 };

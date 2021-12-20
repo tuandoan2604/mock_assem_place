@@ -4,6 +4,8 @@ const userRoute = require('./user.route');
 const roomRoute = require('./room.route');
 const docsRoute = require('./docs.route');
 const fileRoute = require('./file.route');
+const messRoute = require('./message.route');
+const conversationRoute = require('./conversation.route');
 const config = require('../../config/config');
 
 const router = express.Router();
@@ -24,6 +26,14 @@ const defaultRoutes = [
   {
     path: '/file',
     route: fileRoute,
+  },
+  {
+    path: '/conversation',
+    route: conversationRoute,
+  },
+  {
+    path: '/message',
+    route: messRoute,
   },
 ];
 
