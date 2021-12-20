@@ -5,7 +5,6 @@ const httpServer = http.createServer(app);
 const { Server } = require('socket.io');
 const config = require('./config/config');
 const logger = require('./config/logger');
-const { addUser, getUser, deleteUser, getAllUser } = require('./utils/redis');
 
 let server;
 // const postGre = new Client({
@@ -29,34 +28,47 @@ const io = new Server(httpServer, {
   },
 });
 
+var users = [];
+
+const addUser = (userId, socketId) => {
+  if (!users.some((user) => user.userId === userId)) users.push({ userId, socketId });
+};
+
+const removeUser = (socketId) => {
+  const user = users.filter((user) => user.socketId !== socketId);
+  users = [...user];
+};
+
+const getUser = (userId) => {
+  return users.find((user) => user.userId === userId);
+};
+
 io.on('connection', async (socket) => {
-  socket.on('addUser', async (userId) => {
+  socket.on('addUser', (userId) => {
     addUser(userId, socket.id);
-    const users = await getAllUser();
     io.emit('getUsers', users);
   });
 
-  socket.on('sendMessage', async ({ senderId, receiverId, text, type }) => {
-    const senderSocketId = await getUser(senderId);
-    const receiverSocketId = await getUser(receiverId);
-    if (receiverSocketId !== null) {
-      io.to(receiverSocketId).emit('getMessage', {
+  socket.on('sendMessage', ({ senderId, receiverId, text, type }) => {
+    const sender = getUser(senderId);
+    const receiver = getUser(receiverId);
+    if (receiver !== undefined) {
+      io.to(receiver.socketId).emit('getMessage', {
         senderId,
         receiverId,
         text,
         type,
       });
     }
-    io.to(senderSocketId).emit('getMessage', {
+    io.to(sender.socketId).emit('getMessage', {
       senderId,
       receiverId,
       text,
       type,
     });
   });
-  socket.on('disconnect', async () => {
-    await deleteUser(socket.id);
-    const users = await getAllUser();
+  socket.on('disconnect', () => {
+    removeUser(socket.id);
     io.emit('getUsers', users);
   });
 });
